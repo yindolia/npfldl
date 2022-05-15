@@ -193,7 +193,7 @@ def main(args: argparse.Namespace) -> None:
     
     model=Model(args)
     
-    model.fit(dev.take(10), epochs=args.epochs, validation_data=dev.take(10))
+    model.fit(train, epochs=args.epochs, validation_data=dev.take(100))
     # Generate test set annotations, but in `args.logdir` to allow parallel execution.
     os.makedirs(args.logdir, exist_ok=True)
     with open(os.path.join(args.logdir, "homr_competition.txt"), "w", encoding="utf-8") as predictions_file:
