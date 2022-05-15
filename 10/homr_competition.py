@@ -198,7 +198,7 @@ def main(args: argparse.Namespace) -> None:
     os.makedirs(args.logdir, exist_ok=True)
     with open(os.path.join(args.logdir, "homr_competition.txt"), "w", encoding="utf-8") as predictions_file:
         #predictions = model.predic
-        predictions = model.predict(dev)
+        predictions = model.predict(test)
 
         for sequence in predictions:
             print(" ".join(homr.MARKS[mark] for mark in sequence), file=predictions_file)
