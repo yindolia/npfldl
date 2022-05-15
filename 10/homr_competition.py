@@ -14,11 +14,11 @@ from homr_dataset import HOMRDataset
 # TODO: Define reasonable defaults and optionally more parameters.
 # Also, you can set the number of the threads 0 to use all your CPU cores.
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=100, type=int, help="Batch size.")
+parser.add_argument("--batch_size", default=10, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=1, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
-parser.add_argument("--rnn_dim", default=64, type=int, help="RNN cell dimension.")
+parser.add_argument("--rnn_dim", default=32, type=int, help="RNN cell dimension.")
 
 HEIGHT= 64
 
@@ -65,7 +65,7 @@ class Model(tf.keras.Model):
         assert isinstance(gold_labels, tf.RaggedTensor), "Gold labels given to CTC loss must be RaggedTensors"
         assert isinstance(logits, tf.RaggedTensor), "Logits given to CTC loss must be RaggedTensors"
 
-        gold_labels= gold_labels.to_sparse()
+        gold_labels= tf.cast( gold_labels.to_sparse(), dtype=tf.int32)
         logit_length= tf.cast(logits.row_lengths(), dtype=tf.int32)
         logits= logits.to_tensor()
         highest_index= len(HOMRDataset.MARKS)
@@ -82,10 +82,11 @@ class Model(tf.keras.Model):
         logits_length=tf.cast(logits.row_lengths(), dtype=tf.int32 )
         logits=logits.to_tensor()
         logits= tf.transpose(logits, [1,0,2])
-        predictions, score= tf.nn.ctc_beam_search_decoder(logits, logits_length, beam_width=50)
+        predictions, score= tf.nn.ctc_beam_search_decoder(logits, logits_length, beam_width=1)
+
         predictions = tf.RaggedTensor.from_sparse(predictions[0])
 
-        assert isinstance(predictions, tf.RaggedTensor), "CTC predictions must be RaggedTensors"
+        #assert isinstance(predictions, tf.RaggedTensor), "CTC predictions must be RaggedTensors"
         return predictions
 
 
@@ -157,7 +158,7 @@ def main(args: argparse.Namespace) -> None:
             #raise NotImplementedError()
 
         dataset = getattr(homr, name).map(prepare_example)
-        dataset = dataset.shuffle(len(dataset), seed=args.seed) if name == "train" else dataset
+        dataset = dataset.shuffle(10*args.batch_size, seed=args.seed) if name == "train" else dataset
         dataset = dataset.apply(tf.data.experimental.dense_to_ragged_batch(args.batch_size))
         dataset = dataset.prefetch(tf.data.AUTOTUNE)
         return dataset
@@ -192,12 +193,12 @@ def main(args: argparse.Namespace) -> None:
     
     model=Model(args)
     
-    model.fit(train, epochs=args.epochs, validation_data=dev)
+    model.fit(dev.take(10), epochs=args.epochs, validation_data=dev.take(10))
     # Generate test set annotations, but in `args.logdir` to allow parallel execution.
     os.makedirs(args.logdir, exist_ok=True)
     with open(os.path.join(args.logdir, "homr_competition.txt"), "w", encoding="utf-8") as predictions_file:
         #predictions = model.predic
-        predictions = model.predict(test)
+        predictions = model.predict(dev)
 
         for sequence in predictions:
             print(" ".join(homr.MARKS[mark] for mark in sequence), file=predictions_file)
@@ -206,3 +207,4 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
+
