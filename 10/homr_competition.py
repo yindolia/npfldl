@@ -14,17 +14,17 @@ from homr_dataset import HOMRDataset
 # TODO: Define reasonable defaults and optionally more parameters.
 # Also, you can set the number of the threads 0 to use all your CPU cores.
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=10, type=int, help="Batch size.")
+parser.add_argument("--batch_size", default=20, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=1, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
-parser.add_argument("--rnn_dim", default=32, type=int, help="RNN cell dimension.")
+parser.add_argument("--rnn_dim", default=64, type=int, help="RNN cell dimension.")
 
 HEIGHT= 64
 
 
 def rnn_block(inputs):
-    layer= tf.keras.layers.LSTM(args.rnn_dim, return_sequences=True)
+    layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)
     #inputs= tf.cast(inputs, tf.int32)
     bid= tf.keras.layers.Bidirectional(layer, merge_mode='sum')(tf.RaggedTensor.from_tensor(inputs))
     return bid
@@ -54,8 +54,11 @@ class Model(tf.keras.Model):
         logits = tf.keras.layers.Dense(1+len(HOMRDataset.MARKS), activation=None)(bid)
 
         super().__init__(inputs=input, outputs=logits)
-
-        self.compile(optimizer=tf.optimizers.Adam(),
+        
+        lr=tf.keras.optimizers.schedules.CosineDecay(
+            0.001, 10000, alpha=0.01, name=None
+            )
+        self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
                      metrics=[HOMRDataset.EditDistanceMetric()])
 
