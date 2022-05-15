@@ -20,7 +20,7 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 parser.add_argument("--rnn_dim", default=64, type=int, help="RNN cell dimension.")
 
-HEIGHT= 64
+HEIGHT= 100
 
 
 def rnn_block(inputs):
