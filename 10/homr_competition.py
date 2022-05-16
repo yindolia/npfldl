@@ -18,7 +18,7 @@ parser.add_argument("--batch_size", default=64, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=1, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
-parser.add_argument("--rnn_dim", default=192, type=int, help="RNN cell dimension.")
+parser.add_argument("--rnn_dim", default=256, type=int, help="RNN cell dimension.")
 
 HEIGHT= 64
 
@@ -56,7 +56,7 @@ class Model(tf.keras.Model):
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 5000, alpha=0.001, name=None
+            0.001, 6500, alpha=0.0001, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
