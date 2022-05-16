@@ -56,7 +56,7 @@ class Model(tf.keras.Model):
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 6500, alpha=0.0001, name=None
+            0.001, 7000, alpha=0.0001, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
