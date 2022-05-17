@@ -37,7 +37,7 @@ class Model(tf.keras.Model):
         rag_length= input.row_lengths()
         cb= conv_block(input.to_tensor(), 32)
         cb= conv_block(cb,64)
-        cb= conv_block(cb,96)
+        #cb= conv_block(cb,96)
         cb= conv_block(cb,128)
 
         cb = tf.transpose(cb,perm=[0,2,1,3])
@@ -56,7 +56,7 @@ class Model(tf.keras.Model):
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 8000, alpha=0.0005, name=None
+            0.001, 5000, alpha=0.0005, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
@@ -123,10 +123,10 @@ def prepare_dataset(example):
     return example
 
 def conv_block(inputs, num_filters):
-    x = tf.keras.layers.Conv1D(num_filters, 5, strides=2, padding="same")(inputs)
+    x = tf.keras.layers.Conv1D(num_filters, 3, strides=2, padding="same")(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Activation("relu")(x)
-    #x= tf.keras.layers.MaxPooling2D()(x)
+    x= tf.keras.layers.MaxPooling2D()(x)
     return x
 def main(args: argparse.Namespace) -> None:
     # Fix random seeds and threads
@@ -161,7 +161,7 @@ def main(args: argparse.Namespace) -> None:
             #raise NotImplementedError()
 
         dataset = getattr(homr, name).map(prepare_example)
-        dataset = dataset.shuffle(10*args.batch_size, seed=args.seed) if name == "train" else dataset
+        dataset = dataset.shuffle(20*args.batch_size, seed=args.seed) if name == "train" else dataset
         dataset = dataset.apply(tf.data.experimental.dense_to_ragged_batch(args.batch_size))
         dataset = dataset.prefetch(tf.data.AUTOTUNE)
         return dataset
