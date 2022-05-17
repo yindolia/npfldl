@@ -20,7 +20,7 @@ parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=0, type=int, help="Maximum number of threads to use.")
 parser.add_argument("--rnn_dim", default=256, type=int, help="RNN cell dimension.")
 
-HEIGHT= 72
+HEIGHT= 64
 
 
 def rnn_block(inputs):
@@ -56,7 +56,7 @@ class Model(tf.keras.Model):
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 5000, alpha=0.0001, name=None
+            0.001, 8000, alpha=0.0001, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
