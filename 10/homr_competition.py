@@ -38,7 +38,7 @@ class Model(tf.keras.Model):
         cb= conv_block(input.to_tensor(), 32)
         cb= conv_block(cb,64)
         cb= conv_block(cb,96)
-        #cb= conv_block(cb,128)
+        cb= conv_block(cb,128)
 
         cb = tf.transpose(cb,perm=[0,2,1,3])
         cb= tf.reshape(cb, [-1,tf.shape(cb)[1],tf.shape(cb)[2]*tf.shape(cb)[3]])
@@ -56,7 +56,7 @@ class Model(tf.keras.Model):
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 5000, alpha=0.001, name=None
+            0.001, 8000, alpha=0.0005, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
