@@ -145,12 +145,12 @@ def main(args: argparse.Namespace) -> None:
     homr = HOMRDataset()
 
 
-    train = homr.train
-    dev= homr.dev
-    test= homr.test
+    #train = homr.train
+    #dev= homr.dev
+    #test= homr.test
 
-    train=train.map(prepare_dataset)
-    dev= dev.map(prepare_dataset)
+    #train=train.map(prepare_dataset)
+    #dev= dev.map(prepare_dataset)
 
     def create_dataset(name):
         def prepare_example(example):
@@ -196,7 +196,7 @@ def main(args: argparse.Namespace) -> None:
     
     model=Model(args)
     
-    model.fit(train, epochs=args.epochs, validation_data=dev.take(100))
+    model.fit(train, epochs=args.epochs, validation_data=dev)
     # Generate test set annotations, but in `args.logdir` to allow parallel execution.
     os.makedirs(args.logdir, exist_ok=True)
     with open(os.path.join(args.logdir, "homr_competition.txt"), "w", encoding="utf-8") as predictions_file:
