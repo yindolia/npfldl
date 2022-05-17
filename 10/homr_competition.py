@@ -17,10 +17,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--batch_size", default=64, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=1, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
-parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
-parser.add_argument("--rnn_dim", default=192, type=int, help="RNN cell dimension.")
+parser.add_argument("--threads", default=0, type=int, help="Maximum number of threads to use.")
+parser.add_argument("--rnn_dim", default=256, type=int, help="RNN cell dimension.")
 
-HEIGHT= 64
+HEIGHT= 72
 
 
 def rnn_block(inputs):
@@ -37,7 +37,7 @@ class Model(tf.keras.Model):
         rag_length= input.row_lengths()
         cb= conv_block(input.to_tensor(), 32)
         cb= conv_block(cb,64)
-        #cb= conv_block(cb,96)
+        cb= conv_block(cb,96)
         cb= conv_block(cb,128)
 
         cb = tf.transpose(cb,perm=[0,2,1,3])
@@ -49,14 +49,14 @@ class Model(tf.keras.Model):
         #bid= tf.keras.layers.Bidirectional(lstm_layer, merge_mode='sum')(bid)
         #for _ in range(3):
           #  cb= rnn_block(cb)
-        
+        rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bid)
         #fclayer= tf.keras.layers.Dense(args.rnn_dim, activation='relu')(cb)
-        logits = tf.keras.layers.Dense(1+len(HOMRDataset.MARKS), activation=None)(bid)
+        logits = tf.keras.layers.Dense(1+len(HOMRDataset.MARKS), activation=None)(rnn_layer)
 
         super().__init__(inputs=input, outputs=logits)
         
         lr=tf.keras.optimizers.schedules.CosineDecay(
-            0.001, 5000, alpha=0.0005, name=None
+            0.001, 5000, alpha=0.0001, name=None
             )
         self.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
                      loss=self.ctc_loss,
@@ -85,7 +85,8 @@ class Model(tf.keras.Model):
         logits_length=tf.cast(logits.row_lengths(), dtype=tf.int32 )
         logits=logits.to_tensor()
         logits= tf.transpose(logits, [1,0,2])
-        predictions, score= tf.nn.ctc_beam_search_decoder(logits, logits_length, beam_width=1)
+        #predictions, score= tf.nn.ctc_beam_search_decoder(logits, logits_length, beam_width=1)
+        predictions, score= tf.nn.ctc_greedy_decoder(logits, sequence_length=logits_length)
 
         predictions = tf.RaggedTensor.from_sparse(predictions[0])
 
@@ -123,10 +124,10 @@ def prepare_dataset(example):
     return example
 
 def conv_block(inputs, num_filters):
-    x = tf.keras.layers.Conv1D(num_filters, 3, strides=2, padding="same")(inputs)
+    x = tf.keras.layers.Conv2D(num_filters, 3, strides=2, padding="same")(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Activation("relu")(x)
-    x= tf.keras.layers.MaxPooling2D()(x)
+    #x= tf.keras.layers.MaxPooling2D()(x)
     return x
 def main(args: argparse.Namespace) -> None:
     # Fix random seeds and threads
@@ -210,5 +211,4 @@ def main(args: argparse.Namespace) -> None:
 if __name__ == "__main__":
     args = parser.parse_args([] if "__file__" not in globals() else None)
     main(args)
-
 
