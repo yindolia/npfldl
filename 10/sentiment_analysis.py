@@ -18,8 +18,8 @@ from text_classification_dataset import TextClassificationDataset
 # TODO: Define reasonable defaults and optionally more parameters.
 # Also, you can set the number of the threads 0 to use all your CPU cores.
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=100, type=int, help="Batch size.")
-parser.add_argument("--epochs", default=5, type=int, help="Number of epochs.")
+parser.add_argument("--batch_size", default=50, type=int, help="Batch size.")
+parser.add_argument("--epochs", default=1, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
 
@@ -74,9 +74,8 @@ def main(args: argparse.Namespace) -> None:
     eleczech_embeddings= eleczech(input.to_tensor(), attention_mask= tf.sequence_mask(row_lengths) )
     embeddings_layer= tf.RaggedTensor.from_tensor(eleczech_embeddings.last_hidden_state, lengths=row_lengths)
 
-    cell= tf.keras.layers.GRU(750, return_sequences= False)
+    cell= tf.keras.layers.GRU(512, return_sequences= False)
     bidirectional_layer= tf.keras.layers.Bidirectional(cell, merge_mode='sum')(embeddings_layer)
-    #rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bidirectional_layer)
 
     output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(bidirectional_layer)
 
@@ -84,7 +83,7 @@ def main(args: argparse.Namespace) -> None:
     steps=args.epochs * facebook.train.size / args.batch_size
 
     lr= tf.keras.optimizers.schedules.CosineDecay(
-        initial_learning_rate=0.0002, alpha=0.0001, decay_steps= 4000
+        initial_learning_rate=0.0005, alpha=0.0, decay_steps= steps
     )
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
         loss=tf.losses.SparseCategoricalCrossentropy(),
@@ -92,7 +91,18 @@ def main(args: argparse.Namespace) -> None:
 
     model.fit(train, epochs=args.epochs, validation_data=dev)
 
-
+    eleczech.trainable = True
+    
+    cosine_decay = tf.keras.optimizers.schedules.CosineDecay(
+        initial_learning_rate=1e-4, decay_steps=args.epochs * facebook.train.size / args.batch_size
+    )
+    model.compile(optimizer=tf.optimizers.Adam(beta_2=0.99, learning_rate=cosine_decay),
+        loss=tf.losses.SparseCategoricalCrossentropy(),
+        metrics=[tf.metrics.SparseCategoricalAccuracy(name="accuracy")])
+    
+    tb_callback = tf.keras.callbacks.TensorBoard(args.logdir)
+    
+    model.fit(train, epochs=args.epochs, validation_data=dev, callbacks=[tb_callback])
     # Generate test set annotations, but in `args.logdir` to allow parallel execution.
     os.makedirs(args.logdir, exist_ok=True)
     with open(os.path.join(args.logdir, "sentiment_analysis.txt"), "w", encoding="utf-8") as predictions_file:
