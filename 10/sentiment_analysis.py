@@ -18,7 +18,7 @@ from text_classification_dataset import TextClassificationDataset
 # TODO: Define reasonable defaults and optionally more parameters.
 # Also, you can set the number of the threads 0 to use all your CPU cores.
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=20, type=int, help="Batch size.")
+parser.add_argument("--batch_size", default=100, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=5, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
@@ -74,7 +74,7 @@ def main(args: argparse.Namespace) -> None:
     eleczech_embeddings= eleczech(input.to_tensor(), attention_mask= tf.sequence_mask(row_lengths) )
     embeddings_layer= tf.RaggedTensor.from_tensor(eleczech_embeddings.last_hidden_state, lengths=row_lengths)
 
-    cell= tf.keras.layers.GRU(128, return_sequences= False)
+    cell= tf.keras.layers.GRU(1024, return_sequences= False)
     bidirectional_layer= tf.keras.layers.Bidirectional(cell, merge_mode='sum')(embeddings_layer)
 
     output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(bidirectional_layer)
