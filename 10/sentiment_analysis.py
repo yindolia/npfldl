@@ -84,7 +84,7 @@ def main(args: argparse.Namespace) -> None:
     steps=args.epochs * facebook.train.size / args.batch_size
 
     lr= tf.keras.optimizers.schedules.CosineDecay(
-        initial_learning_rate=0.0005, alpha=0.0001, decay_steps= 5000
+        initial_learning_rate=0.0002, alpha=0.0001, decay_steps= 4000
     )
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
         loss=tf.losses.SparseCategoricalCrossentropy(),
