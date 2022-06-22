@@ -76,8 +76,9 @@ def main(args: argparse.Namespace) -> None:
 
     cell= tf.keras.layers.GRU(512, return_sequences= False)
     bidirectional_layer= tf.keras.layers.Bidirectional(cell, merge_mode='sum')(embeddings_layer)
+    rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bidirectional_layer)
 
-    output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(bidirectional_layer)
+    output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(rnn_layer)
 
     model = tf.keras.Model(input, output)
     steps=args.epochs * facebook.train.size / args.batch_size
