@@ -76,15 +76,15 @@ def main(args: argparse.Namespace) -> None:
 
     cell= tf.keras.layers.GRU(512, return_sequences= False)
     bidirectional_layer= tf.keras.layers.Bidirectional(cell, merge_mode='sum')(embeddings_layer)
-    rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bidirectional_layer)
+    #rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bidirectional_layer)
 
-    output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(rnn_layer)
+    output= tf.keras.layers.Dense(3, activation= tf.nn.softmax)(bidirectional_layer)
 
     model = tf.keras.Model(input, output)
     steps=args.epochs * facebook.train.size / args.batch_size
 
     lr= tf.keras.optimizers.schedules.CosineDecay(
-        initial_learning_rate=0.0001, alpha=0.0, decay_steps= steps
+        initial_learning_rate=0.0001, alpha=0.0, decay_steps= 3000
     )
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
         loss=tf.losses.SparseCategoricalCrossentropy(),
