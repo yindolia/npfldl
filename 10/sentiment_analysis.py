@@ -74,7 +74,7 @@ def main(args: argparse.Namespace) -> None:
     eleczech_embeddings= eleczech(input.to_tensor(), attention_mask= tf.sequence_mask(row_lengths) )
     embeddings_layer= tf.RaggedTensor.from_tensor(eleczech_embeddings.last_hidden_state, lengths=row_lengths)
 
-    cell= tf.keras.layers.GRU(512, return_sequences= False)
+    cell= tf.keras.layers.GRU(750, return_sequences= False)
     bidirectional_layer= tf.keras.layers.Bidirectional(cell, merge_mode='sum')(embeddings_layer)
     #rnn_layer= tf.keras.layers.GRU(args.rnn_dim, return_sequences=True)(bidirectional_layer)
 
@@ -84,7 +84,7 @@ def main(args: argparse.Namespace) -> None:
     steps=args.epochs * facebook.train.size / args.batch_size
 
     lr= tf.keras.optimizers.schedules.CosineDecay(
-        initial_learning_rate=0.0005, alpha=0.001, decay_steps= 3000
+        initial_learning_rate=0.0005, alpha=0.0001, decay_steps= 5000
     )
     model.compile(optimizer=tf.optimizers.Adam(learning_rate=lr),
         loss=tf.losses.SparseCategoricalCrossentropy(),
