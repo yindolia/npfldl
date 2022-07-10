@@ -14,7 +14,7 @@ from reading_comprehension_dataset import ReadingComprehensionDataset
 # TODO: Define reasonable defaults and optionally more parameters.
 # Also, you can set the number of the threads 0 to use all your CPU cores.
 parser = argparse.ArgumentParser()
-parser.add_argument("--batch_size", default=2, type=int, help="Batch size.")
+parser.add_argument("--batch_size", default=10, type=int, help="Batch size.")
 parser.add_argument("--epochs", default=2, type=int, help="Number of epochs.")
 parser.add_argument("--seed", default=42, type=int, help="Random seed.")
 parser.add_argument("--threads", default=1, type=int, help="Maximum number of threads to use.")
@@ -45,7 +45,7 @@ class Model(tf.keras.Model):
         epsilon=1e-08
         clipnorm=1
         self.compile(
-            optimizer=tf.keras.optimizers.Adam(learning_rate=lr, epsilon=epsilon, clipnorm=clipnorm),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr, epsilon=epsilon, clipnorm=clipnorm),
             loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=False),
             metrics = tf.keras.metrics.SparseCategoricalAccuracy()
         )
